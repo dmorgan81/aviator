@@ -1,0 +1,40 @@
+{
+  "name": "aviator",
+  "author": "David Morgan",
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-app"
+  ],
+  "private": true,
+  "dependencies": {
+    "pebble-fctx": "^1.6.2"
+  },
+  "pebble": {
+    "displayName": "Aviator",
+    "uuid": "f49b0e15-c928-45a2-bb92-3daf245ad89b",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "messageKeys": [],
+    "resources": {
+      "media": [
+        {
+          "file": "LECO1976-Regular.ffont",
+          "name": "LECO_FFONT",
+          "type": "raw"
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "pebble-fctx-compiler": "^1.2.2"
+  }
+}
