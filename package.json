@@ -27,11 +27,17 @@
           "file": "LECO1976-Regular.ffont",
           "name": "LECO_FFONT",
           "type": "raw"
+        },
+        {
+          "file": "pebble-logo.png",
+          "name": "PEBBLE_LOGO",
+          "type": "bitmap"
         }
       ]
     }
   },
   "devDependencies": {
-    "pebble-fctx-compiler": "^1.2.2"
+    "pebble-fctx-compiler": "^1.2.2",
+    "svgexport": "^0.3.2"
   }
 }
