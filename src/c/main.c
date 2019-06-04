@@ -148,13 +148,14 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
 
 static void prv_hands_layer_update_proc(Layer *layer, GContext *ctx) {
   graphics_context_set_fill_color(ctx, GColorLightGray);
-  gpath_draw_filled(ctx, s_path_hour);
-  gpath_draw_filled(ctx, s_path_minute);
-
   graphics_context_set_stroke_color(ctx, GColorBlack);
   graphics_context_set_stroke_width(ctx, 2);
-  gpath_draw_outline(ctx, s_path_hour);
+
+  gpath_draw_filled(ctx, s_path_minute);
   gpath_draw_outline(ctx, s_path_minute);
+
+  gpath_draw_filled(ctx, s_path_hour);
+  gpath_draw_outline(ctx, s_path_hour);
 
   GRect bounds = layer_get_bounds(layer);
   graphics_context_set_fill_color(ctx, GColorBlack);
