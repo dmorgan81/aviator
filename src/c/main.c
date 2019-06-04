@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include <pebble-events/pebble-events.h>
 #include <pebble-fctx/fctx.h>
 #include <pebble-fctx/ffont.h>
 #include "logging.h"
@@ -36,6 +37,8 @@ static Layer *s_hands_layer;
 
 static FFont *s_font;
 static GBitmap *s_logo;
+
+static EventHandle s_tick_timer_event_handle;
 
 #define fpoint_from_polar(bounds, angle) g2fpoint(gpoint_from_polar((bounds), GOvalScaleModeFitCircle, (angle)))
 
@@ -201,11 +204,11 @@ static void prv_window_load(Window *window) {
 
   time_t now = time(NULL);
   prv_tick_handler(localtime(&now), MINUTE_UNIT);
-  tick_timer_service_subscribe(MINUTE_UNIT, prv_tick_handler);
+  s_tick_timer_event_handle = events_tick_timer_service_subscribe(MINUTE_UNIT, prv_tick_handler);
 }
 
 static void prv_window_unload(Window *window) {
-  tick_timer_service_unsubscribe();
+  events_tick_timer_service_unsubscribe(s_tick_timer_event_handle);
 
   bitmap_layer_destroy(s_logo_layer);
   layer_destroy(s_hands_layer);
