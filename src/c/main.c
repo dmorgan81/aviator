@@ -28,46 +28,34 @@ static inline void fctx_draw_line(FContext *fctx, uint32_t rotation, FPoint offs
 
 static void prv_outer_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = grect_crop(layer_get_bounds(layer), 3);
-  /*
-  GRect crop = grect_crop(bounds, 12);
-
-  graphics_context_set_stroke_color(ctx, GColorBlack);
-
-  for (int i = 0; i < 60; i++) {
-    if (i % 5 == 0 && i != 0) continue;
-    int32_t angle = TRIG_MAX_ANGLE * i / 60;
-    GPoint p1 = gpoint_from_polar(bounds, GOvalScaleModeFitCircle, angle);
-    GPoint p2 = gpoint_from_polar(crop, GOvalScaleModeFitCircle, angle);
-
-    graphics_draw_line(ctx, p1, p2);
-  }
-  */
 
   FContext fctx;
   fctx_init_context(&fctx, ctx);
-  fctx_set_fill_color(&fctx, GColorBlack);
 
+  fctx_set_fill_color(&fctx, PBL_IF_COLOR_ELSE(GColorLightGray, GColorBlack));
+  FPoint scale = FPointI(1, 8);
   for (int i = 0; i < 60; i++) {
     if (i % 5 == 0 && i != 0) continue;
     int32_t angle = TRIG_MAX_ANGLE * i / 60;
     FPoint offset = fpoint_from_polar(bounds, angle);
-    fctx_draw_line(&fctx, angle, offset, FPointI(1, 8));
+    fctx_draw_line(&fctx, angle, offset, scale);
   }
 
+  fctx_set_fill_color(&fctx, GColorBlack);
   fctx_set_text_em_height(&fctx, s_font, 10);
   for (int i = 1; i < 12; i++) {
     fctx_begin_fill(&fctx);
 
     int32_t angle = TRIG_MAX_ANGLE * i / 12;
-    // TODO adjust rotation for i > 3 && i < 9
-    fctx_set_rotation(&fctx, angle);
+    int32_t rotation = (i > 3 && i < 9) ? (TRIG_MAX_ANGLE / 2) : 0;
+    fctx_set_rotation(&fctx, angle + rotation);
 
     FPoint offset = fpoint_from_polar(bounds, angle);
     fctx_set_offset(&fctx, offset);
 
     char s[3];
     snprintf(s, sizeof(s), "%d", i * 5);
-    fctx_draw_string(&fctx, s, s_font, GTextAlignmentCenter, FTextAnchorTop);
+    fctx_draw_string(&fctx, s, s_font, GTextAlignmentCenter, (i > 3 && i < 9) ? FTextAnchorBaseline : FTextAnchorTop);
 
     fctx_end_fill(&fctx);
   }
