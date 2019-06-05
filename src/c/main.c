@@ -34,6 +34,7 @@ static GPath *s_path_hour;
 
 static Window *s_window;
 static BitmapLayer *s_logo_layer;
+static TextLayer *s_name_layer;
 static Layer *s_outer_tick_layer;
 static Layer *s_inner_tick_layer;
 static Layer *s_date_layer;
@@ -268,6 +269,8 @@ static void prv_settings_received_handler(void *context) {
     palette[i] = logo_color;
   }
 
+  text_layer_set_text_color(s_name_layer, logo_color);
+
   gdraw_command_list_iterate(gdraw_command_image_get_command_list(s_battery_pdc),
     prv_battery_pdc_iterator, &logo_color);
 
@@ -283,6 +286,13 @@ static void prv_window_load(Window *window) {
   bitmap_layer_set_alignment(s_logo_layer, GAlignTop);
   bitmap_layer_set_compositing_mode(s_logo_layer, GCompOpSet);
   layer_add_child(root_layer, bitmap_layer_get_layer(s_logo_layer));
+
+  s_name_layer = text_layer_create(GRect(0, 108, frame.size.w, frame.size.h));
+  text_layer_set_background_color(s_name_layer, GColorClear);
+  text_layer_set_text(s_name_layer, "AVIATOR");
+  text_layer_set_font(s_name_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_text_alignment(s_name_layer, GTextAlignmentCenter);
+  layer_add_child(root_layer, text_layer_get_layer(s_name_layer));
 
   s_date_layer = layer_create(GRect(106, 80, 25, 17));
   layer_set_update_proc(s_date_layer, prv_date_layer_update_proc);
@@ -328,6 +338,7 @@ static void prv_window_unload(Window *window) {
   layer_destroy(s_outer_tick_layer);
   layer_destroy(s_battery_layer);
   layer_destroy(s_date_layer);
+  text_layer_destroy(s_name_layer);
   bitmap_layer_destroy(s_logo_layer);
 }
 
