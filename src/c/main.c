@@ -201,6 +201,12 @@ static void prv_settings_received_handler(void *context) {
   prv_tick_handler(localtime(&now), enamel_get_ENABLE_SECONDS() ? SECOND_UNIT : MINUTE_UNIT);
   s_tick_timer_event_handle = events_tick_timer_service_subscribe(enamel_get_ENABLE_SECONDS() ? SECOND_UNIT : MINUTE_UNIT, prv_tick_handler);
 
+  GColor logo_color = gcolor_legible_over(enamel_get_BACKGROUND_COLOR());
+  GColor *palette = gbitmap_get_palette(s_logo);
+  for (int i = 1; i < 4; i++) {
+    palette[i] = logo_color;
+  }
+
   window_set_background_color(s_window, enamel_get_BACKGROUND_COLOR());
 }
 
