@@ -17,7 +17,7 @@ static const GPathInfo PATH_SECOND = {
 static const GPathInfo PATH_MINUTE = {
   7,
   (GPoint []) {
-    {-1, 0}, {-1, -13}, {-5, -50}, {0, -70}, {5, -50}, {1, -13}, {1, 0}
+    {-2, 0}, {-2, -13}, {-6, -50}, {0, -70}, {6, -50}, {2, -13}, {2, 0}
   }
 };
 
