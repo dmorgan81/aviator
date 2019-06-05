@@ -217,6 +217,11 @@ static void prv_hands_layer_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+#ifdef SCREENSHOT
+  tick_time->tm_hour = 3;
+  tick_time->tm_min = 40;
+#endif
+
   int32_t angle = tick_time->tm_min * TRIG_MAX_ANGLE / 60;
   gpath_rotate_to(s_path_minute, angle);
 
@@ -245,6 +250,9 @@ static bool prv_battery_pdc_iterator(GDrawCommand *command, uint32_t index, void
 }
 
 static void prv_battery_event_handler(BatteryChargeState state) {
+#ifdef SCREENSHOT
+  state.charge_percent = 50;
+#endif
   GDrawCommandList *list = gdraw_command_image_get_command_list(s_battery_pdc);
   gdraw_command_set_hidden(gdraw_command_list_get_command(list, 2), state.charge_percent < 80);
   gdraw_command_set_hidden(gdraw_command_list_get_command(list, 3), state.charge_percent < 40);
