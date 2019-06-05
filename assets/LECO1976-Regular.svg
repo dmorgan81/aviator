@@ -79,7 +79,7 @@ d="M560 700v-700h-490v140h350v140h-280v140h280v140h-350v140h490z" />
     <glyph glyph-name="four" unicode="4" 
 d="M210 700v-280h210v280h140v-700h-140v280h-350v420h140z" />
     <glyph glyph-name="five" unicode="5" 
-d="M70 0v210h140v-70h210v140h-350v420h490v-140h-350v-140h350v-420h-490z" />
+d="M70 280v420h490v-140h-350v-140h350v-420h-490v140h350v140h-350z" />
     <glyph glyph-name="six" unicode="6" 
 d="M70 0v700h490v-140h-350v-140h350v-420h-490zM210 280v-140h210v140h-210z" />
     <glyph glyph-name="seven" unicode="7" horiz-adv-x="595" 
