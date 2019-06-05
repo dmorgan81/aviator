@@ -1,0 +1,82 @@
+[
+    {
+        "type": "section",
+        "items": [
+            {
+                "type": "color",
+                "messageKey": "BACKGROUND_COLOR",
+                "label": "Background Color",
+                "defaultValue": "000000",
+                "layout": [
+                    [ "000000", "FFFFFF" ]
+                ]
+            },
+            {
+                "type": "toggle",
+                "messageKey": "ENABLE_SECONDS",
+                "label": "Show Second Hand",
+                "defaultValue": false
+            },
+            {
+                "type": "color",
+                "messageKey": "HOUR_HAND_COLOR",
+                "label": "Hour Hand Color",
+                "defaultValue": "AAAAAA",
+                "sunlight": false,
+                "layout": [
+                    [ "55FF00", "FFFF00", "FF5500" ],
+                    [ "00AAFF", "FF0000", "FF00AA" ],
+                    [ "AAAAAA", "FFFFFF", "#AA55FF" ]
+                ]
+            },{
+                "type": "color",
+                "messageKey": "MINUTE_HAND_COLOR",
+                "label": "Minute Hand Color",
+                "defaultValue": "AAAAAA",
+                "sunlight": false,
+                "layout": [
+                    [ "55FF00", "FFFF00", "FF5500" ],
+                    [ "00AAFF", "FF0000", "FF00AA" ],
+                    [ "AAAAAA", "FFFFFF", "#AA55FF" ]
+                ]
+            },
+            {
+                "type": "toggle",
+                "messageKey": "HOURLY_VIBE",
+                "label": "Vibrate on the Hour",
+                "defaultValue": true
+            },
+            {
+                "type": "radiogroup",
+                "messageKey": "CONNECTION_VIBE",
+                "label": "Bluetooth Vibrate",
+                "defaultValue": "1",
+                "options": [
+                    {
+                        "label": "On Disconnect",
+                        "value": "1"
+                    },
+                    {
+                        "label": "On Disconnect & Reconnect",
+                        "value": "2"
+                    },
+                    {
+                        "label": "Neither",
+                        "value": "0"
+                    }
+                ]
+            },
+            {
+                "type": "toggle",
+                "messageKey": "ENABLE_HEALTH",
+                "label": "Enable Health",
+                "description": "Suppresses Bluetooth and hourly vibes while sleeping",
+                "defaultValue": false
+            }
+        ]
+    },
+    {
+        "type": "submit",
+        "defaultValue": "Save"
+    }
+]

@@ -7,8 +7,11 @@
   ],
   "private": true,
   "dependencies": {
+    "enamel": "^1.2.5",
+    "pebble-connection-vibes": "^1.1.0",
     "pebble-events": "^1.2.0",
-    "pebble-fctx": "^1.6.2"
+    "pebble-fctx": "^1.6.2",
+    "pebble-hourly-vibes": "^1.1.0"
   },
   "pebble": {
     "displayName": "Aviator",
@@ -21,7 +24,15 @@
     "watchapp": {
       "watchface": true
     },
-    "messageKeys": [],
+    "messageKeys": [
+      "HOURLY_VIBE",
+      "CONNECTION_VIBE",
+      "ENABLE_HEALTH",
+      "ENABLE_SECONDS",
+      "BACKGROUND_COLOR",
+      "HOUR_HAND_COLOR",
+      "MINUTE_HAND_COLOR"
+    ],
     "resources": {
       "media": [
         {

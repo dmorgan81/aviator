@@ -2,6 +2,9 @@
 #include <pebble-events/pebble-events.h>
 #include <pebble-fctx/fctx.h>
 #include <pebble-fctx/ffont.h>
+#include <pebble-connection-vibes/connection-vibes.h>
+#include <pebble-hourly-vibes/hourly-vibes.h>
+#include "enamel.h"
 #include "logging.h"
 
 static const GPathInfo PATH_SECOND = {
@@ -38,6 +41,7 @@ static Layer *s_hands_layer;
 static FFont *s_font;
 static GBitmap *s_logo;
 
+static EventHandle s_settings_event_handle;
 static EventHandle s_tick_timer_event_handle;
 
 #define fpoint_from_polar(bounds, angle) g2fpoint(gpoint_from_polar((bounds), GOvalScaleModeFitCircle, (angle)))
@@ -73,7 +77,7 @@ static void prv_outer_tick_layer_update_proc(Layer *layer, GContext *ctx) {
     fctx_draw_line(&fctx, angle, offset, scale);
   }
 
-  fctx_set_fill_color(&fctx, GColorBlack);
+  fctx_set_fill_color(&fctx, gcolor_legible_over(enamel_get_BACKGROUND_COLOR()));
   fctx_set_text_em_height(&fctx, s_font, 10);
   for (int i = 1; i < 12; i++) {
     fctx_begin_fill(&fctx);
@@ -103,7 +107,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
 
   fctx_set_offset(&fctx, FPointI(bounds.origin.x + (bounds.size.w / 2), bounds.origin.y));
   fctx_set_scale(&fctx, FPointOne, FPointI(9, 12));
-  fctx_set_fill_color(&fctx, GColorBlack);
+  fctx_set_fill_color(&fctx, enamel_get_HOUR_HAND_COLOR());
 
   fctx_begin_fill(&fctx);
   fctx_move_to(&fctx, FPointZero);
@@ -130,7 +134,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   }
 
   fctx_set_rotation(&fctx, 0);
-  fctx_set_fill_color(&fctx, GColorBlack);
+  fctx_set_fill_color(&fctx, gcolor_legible_over(enamel_get_BACKGROUND_COLOR()));
   fctx_set_text_em_height(&fctx, s_font, 18);
   for (int i = 1; i <= 12; i++) {
     fctx_begin_fill(&fctx);
@@ -150,19 +154,27 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void prv_hands_layer_update_proc(Layer *layer, GContext *ctx) {
-  graphics_context_set_fill_color(ctx, GColorLightGray);
-  graphics_context_set_stroke_color(ctx, GColorBlack);
-  graphics_context_set_stroke_width(ctx, 2);
+  graphics_context_set_stroke_color(ctx, GColorDarkGray);
+  graphics_context_set_stroke_width(ctx, 1);
 
+  graphics_context_set_fill_color(ctx, enamel_get_MINUTE_HAND_COLOR());
   gpath_draw_filled(ctx, s_path_minute);
   gpath_draw_outline(ctx, s_path_minute);
 
+  graphics_context_set_fill_color(ctx, enamel_get_HOUR_HAND_COLOR());
   gpath_draw_filled(ctx, s_path_hour);
   gpath_draw_outline(ctx, s_path_hour);
 
+  if (enamel_get_ENABLE_SECONDS()) {
+    gpath_draw_outline(ctx, s_path_second);
+  }
+
   GRect bounds = layer_get_bounds(layer);
-  graphics_context_set_fill_color(ctx, GColorBlack);
-  graphics_fill_circle(ctx, grect_center_point(&bounds), 8);
+  GPoint center = grect_center_point(&bounds);
+  center.x -= 1;
+  center.y -= 1;
+  graphics_context_set_fill_color(ctx, GColorDarkGray);
+  graphics_fill_circle(ctx, center, 4);
 }
 
 static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -171,8 +183,25 @@ static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 
   angle = (TRIG_MAX_ANGLE * ((tick_time->tm_hour * 6) + (tick_time->tm_min / 10))) / (24 * 6);
   gpath_rotate_to(s_path_hour, angle);
+  
+  angle = tick_time->tm_sec * TRIG_MAX_ANGLE / 60;
+  gpath_rotate_to(s_path_second, angle);
 
   layer_mark_dirty(s_hands_layer);
+}
+
+static void prv_settings_received_handler(void *context) {
+  connection_vibes_set_state(atoi(enamel_get_CONNECTION_VIBE()));
+  hourly_vibes_set_enabled(enamel_get_HOURLY_VIBE());
+  connection_vibes_enable_health(enamel_get_ENABLE_HEALTH());
+  hourly_vibes_enable_health(enamel_get_ENABLE_HEALTH());
+
+  if (s_tick_timer_event_handle) events_tick_timer_service_unsubscribe(s_tick_timer_event_handle);
+  time_t now = time(NULL);
+  prv_tick_handler(localtime(&now), enamel_get_ENABLE_SECONDS() ? SECOND_UNIT : MINUTE_UNIT);
+  s_tick_timer_event_handle = events_tick_timer_service_subscribe(enamel_get_ENABLE_SECONDS() ? SECOND_UNIT : MINUTE_UNIT, prv_tick_handler);
+
+  window_set_background_color(s_window, enamel_get_BACKGROUND_COLOR());
 }
 
 static void prv_window_load(Window *window) {
@@ -198,17 +227,19 @@ static void prv_window_load(Window *window) {
   layer_add_child(root_layer, s_hands_layer);
 
   GPoint center = grect_center_point(&frame);
+  center.x -= 1;
+  center.y -= 1;
   gpath_move_to(s_path_second, center);
   gpath_move_to(s_path_minute, center);
   gpath_move_to(s_path_hour, center);
 
-  time_t now = time(NULL);
-  prv_tick_handler(localtime(&now), MINUTE_UNIT);
-  s_tick_timer_event_handle = events_tick_timer_service_subscribe(MINUTE_UNIT, prv_tick_handler);
+  prv_settings_received_handler(NULL);
+  s_settings_event_handle = enamel_settings_received_subscribe(prv_settings_received_handler, NULL);
 }
 
 static void prv_window_unload(Window *window) {
   events_tick_timer_service_unsubscribe(s_tick_timer_event_handle);
+  enamel_settings_received_unsubscribe(s_settings_event_handle);
 
   bitmap_layer_destroy(s_logo_layer);
   layer_destroy(s_hands_layer);
@@ -217,6 +248,17 @@ static void prv_window_unload(Window *window) {
 }
 
 static void prv_init(void) {
+  enamel_init();
+  connection_vibes_init();
+  hourly_vibes_init();
+  uint32_t const pattern[] = { 300 };
+  hourly_vibes_set_pattern((VibePattern) {
+      .durations = pattern,
+      .num_segments = 1
+  });
+
+  events_app_message_open();
+
   s_font = ffont_create_from_resource(RESOURCE_ID_LECO_FFONT);
   s_logo = gbitmap_create_with_resource(RESOURCE_ID_PEBBLE_LOGO);
 
@@ -240,6 +282,10 @@ static void prv_deinit(void) {
   gpath_destroy(s_path_second);
   gbitmap_destroy(s_logo);
   ffont_destroy(s_font);
+
+  hourly_vibes_deinit();
+  connection_vibes_deinit();
+  enamel_deinit();
 }
 
 int main(void) {
