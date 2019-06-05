@@ -109,7 +109,7 @@ static void prv_outer_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   fctx_set_fill_color(&fctx, GColorLightGray);
   FPoint scale = FPointI(1, 8);
   for (int i = 0; i < 60; i++) {
-    if (i % 5 == 0 && i != 0) continue;
+    if (i % 5 == 0) continue;
     int32_t angle = TRIG_MAX_ANGLE * i / 60;
     FPoint offset = fpoint_from_polar(bounds, angle);
     fctx_draw_line(&fctx, angle, offset, scale);
@@ -143,7 +143,20 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   FContext fctx;
   fctx_init_context(&fctx, ctx);
 
-  fctx_set_offset(&fctx, FPointI(bounds.origin.x + (bounds.size.w / 2), bounds.origin.y));
+  FPoint offset = FPointI(bounds.origin.x + (bounds.size.w / 2), bounds.origin.y);
+  fctx_set_offset(&fctx, offset);
+  fctx_set_scale(&fctx, FPointOne, FPointI(11, 14));
+  fctx_set_fill_color(&fctx, GColorDarkGray);
+
+  fctx_begin_fill(&fctx);
+  fctx_move_to(&fctx, FPointZero);
+  fctx_line_to(&fctx, FPoint(-1, 1));
+  fctx_line_to(&fctx, FPoint(1, 1));
+  fctx_close_path(&fctx);
+  fctx_end_fill(&fctx);
+
+  offset.y += FIX1;
+  fctx_set_offset(&fctx, offset);
   fctx_set_scale(&fctx, FPointOne, FPointI(9, 12));
   fctx_set_fill_color(&fctx, enamel_get_HOUR_HAND_COLOR());
 
@@ -159,7 +172,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   FPoint scale = FPointI(3, 3);
   for (int i = 5; i < 60; i += 5) {
     int32_t angle = TRIG_MAX_ANGLE * i / 60;
-    FPoint offset = fpoint_from_polar(bounds, angle);
+    offset = fpoint_from_polar(bounds, angle);
     fctx_draw_line(&fctx, angle, offset, scale);
   }
 
@@ -167,7 +180,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   scale = FPointI(1, 12);
   for (int i = 5; i < 120; i += 10) {
     int32_t angle = TRIG_MAX_ANGLE * i / 120;
-    FPoint offset = fpoint_from_polar(bounds, angle);
+    offset = fpoint_from_polar(bounds, angle);
     fctx_draw_line(&fctx, angle, offset, scale);
   }
 
@@ -178,7 +191,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
     fctx_begin_fill(&fctx);
 
     int32_t angle = TRIG_MAX_ANGLE * i / 12;
-    FPoint offset = fpoint_from_polar(bounds, angle);
+    offset = fpoint_from_polar(bounds, angle);
     fctx_set_offset(&fctx, offset);
 
     char s[3];
