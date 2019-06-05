@@ -27,6 +27,7 @@
     "messageKeys": [
       "HOURLY_VIBE",
       "CONNECTION_VIBE",
+      "CLOCK_TYPE",
       "ENABLE_HEALTH",
       "ENABLE_SECONDS",
       "BACKGROUND_COLOR",

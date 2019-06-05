@@ -44,6 +44,8 @@ static GBitmap *s_logo;
 static EventHandle s_settings_event_handle;
 static EventHandle s_tick_timer_event_handle;
 
+static uint8_t s_hour_multiplier;
+
 #define fpoint_from_polar(bounds, angle) g2fpoint(gpoint_from_polar((bounds), GOvalScaleModeFitCircle, (angle)))
 
 static inline void fctx_draw_line(FContext *fctx, uint32_t rotation, FPoint offset, FPoint scale) {
@@ -144,7 +146,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
     fctx_set_offset(&fctx, offset);
 
     char s[3];
-    snprintf(s, sizeof(s), "%02d", i * 2);
+    snprintf(s, sizeof(s), "%02d", i * s_hour_multiplier);
     fctx_draw_string(&fctx, s, s_font, GTextAlignmentCenter, FTextAnchorMiddle);
 
     fctx_end_fill(&fctx);
@@ -166,6 +168,7 @@ static void prv_hands_layer_update_proc(Layer *layer, GContext *ctx) {
   gpath_draw_outline(ctx, s_path_hour);
 
   if (enamel_get_ENABLE_SECONDS()) {
+    graphics_context_set_stroke_width(ctx, 2);
     gpath_draw_outline(ctx, s_path_second);
   }
 
@@ -181,7 +184,8 @@ static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   int32_t angle = tick_time->tm_min * TRIG_MAX_ANGLE / 60;
   gpath_rotate_to(s_path_minute, angle);
 
-  angle = (TRIG_MAX_ANGLE * ((tick_time->tm_hour * 6) + (tick_time->tm_min / 10))) / (24 * 6);
+  s_hour_multiplier = atoi(enamel_get_CLOCK_TYPE());
+  angle = (TRIG_MAX_ANGLE * ((tick_time->tm_hour * 6) + (tick_time->tm_min / 10))) / (12 * s_hour_multiplier * 6);
   gpath_rotate_to(s_path_hour, angle);
   
   angle = tick_time->tm_sec * TRIG_MAX_ANGLE / 60;

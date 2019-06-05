@@ -3,6 +3,22 @@
         "type": "section",
         "items": [
             {
+                "type": "radiogroup",
+                "messageKey": "CLOCK_TYPE",
+                "label": "12/24 Hour Clock",
+                "defaultValue": "2",
+                "options": [
+                    {
+                        "label": "24 Hour",
+                        "value": "2"
+                    },
+                    {
+                        "label": "12 Hour",
+                        "value": "1"
+                    }
+                ]
+            },
+            {
                 "type": "color",
                 "messageKey": "BACKGROUND_COLOR",
                 "label": "Background Color",
