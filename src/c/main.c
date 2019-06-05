@@ -36,6 +36,7 @@ static Window *s_window;
 static BitmapLayer *s_logo_layer;
 static Layer *s_outer_tick_layer;
 static Layer *s_inner_tick_layer;
+static Layer *s_date_layer;
 static Layer *s_hands_layer;
 
 static FFont *s_font;
@@ -45,6 +46,7 @@ static EventHandle s_settings_event_handle;
 static EventHandle s_tick_timer_event_handle;
 
 static uint8_t s_hour_multiplier;
+static char s_date[3];
 
 #define fpoint_from_polar(bounds, angle) g2fpoint(gpoint_from_polar((bounds), GOvalScaleModeFitCircle, (angle)))
 
@@ -62,6 +64,32 @@ static inline void fctx_draw_line(FContext *fctx, uint32_t rotation, FPoint offs
     fctx_close_path(fctx);
 
     fctx_end_fill(fctx);
+}
+
+static void prv_date_layer_update_proc(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_bounds(layer);
+  GRect frame = layer_get_frame(layer);
+
+  graphics_context_set_stroke_color(ctx, gcolor_legible_over(enamel_get_BACKGROUND_COLOR()));
+  graphics_draw_rect(ctx, bounds);
+
+  graphics_context_set_fill_color(ctx, gcolor_legible_over(enamel_get_BACKGROUND_COLOR()));
+  graphics_fill_rect(ctx, grect_crop(bounds, 2), 0, GCornerNone);
+
+  FContext fctx;
+  fctx_init_context(&fctx, ctx);
+
+  FPoint offset = FPointI(frame.origin.x + bounds.size.w - 3, frame.origin.y + 3);
+  fctx_set_offset(&fctx, offset);
+
+  fctx_set_fill_color(&fctx, enamel_get_BACKGROUND_COLOR());
+  fctx_set_text_em_height(&fctx, s_font, 15);
+
+  fctx_begin_fill(&fctx);
+  fctx_draw_string(&fctx, s_date, s_font, GTextAlignmentRight, FTextAnchorTop);
+  fctx_end_fill(&fctx);
+
+  fctx_deinit_context(&fctx);
 }
 
 static void prv_outer_tick_layer_update_proc(Layer *layer, GContext *ctx) {
@@ -192,6 +220,11 @@ static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   gpath_rotate_to(s_path_second, angle);
 
   layer_mark_dirty(s_hands_layer);
+
+  if (units_changed & DAY_UNIT) {
+    snprintf(s_date, sizeof(s_date), "%d", tick_time->tm_mday);
+    layer_mark_dirty(s_date_layer);
+  }
 }
 
 static void prv_settings_received_handler(void *context) {
@@ -202,7 +235,7 @@ static void prv_settings_received_handler(void *context) {
 
   if (s_tick_timer_event_handle) events_tick_timer_service_unsubscribe(s_tick_timer_event_handle);
   time_t now = time(NULL);
-  prv_tick_handler(localtime(&now), enamel_get_ENABLE_SECONDS() ? SECOND_UNIT : MINUTE_UNIT);
+  prv_tick_handler(localtime(&now), DAY_UNIT);
   s_tick_timer_event_handle = events_tick_timer_service_subscribe(enamel_get_ENABLE_SECONDS() ? SECOND_UNIT : MINUTE_UNIT, prv_tick_handler);
 
   GColor logo_color = gcolor_legible_over(enamel_get_BACKGROUND_COLOR());
@@ -218,11 +251,15 @@ static void prv_window_load(Window *window) {
   Layer *root_layer = window_get_root_layer(window);
   GRect frame = layer_get_frame(root_layer);
 
-  s_logo_layer = bitmap_layer_create(GRect(0, 60, frame.size.w, 21));
+  s_logo_layer = bitmap_layer_create(GRect(0, 56, frame.size.w, 14));
   bitmap_layer_set_bitmap(s_logo_layer, s_logo);
   bitmap_layer_set_alignment(s_logo_layer, GAlignTop);
   bitmap_layer_set_compositing_mode(s_logo_layer, GCompOpSet);
   layer_add_child(root_layer, bitmap_layer_get_layer(s_logo_layer));
+
+  s_date_layer = layer_create(GRect(106, 80, 25, 17));
+  layer_set_update_proc(s_date_layer, prv_date_layer_update_proc);
+  layer_add_child(root_layer, s_date_layer);
 
   s_outer_tick_layer = layer_create(frame);
   layer_set_update_proc(s_outer_tick_layer, prv_outer_tick_layer_update_proc);
@@ -251,10 +288,11 @@ static void prv_window_unload(Window *window) {
   events_tick_timer_service_unsubscribe(s_tick_timer_event_handle);
   enamel_settings_received_unsubscribe(s_settings_event_handle);
 
-  bitmap_layer_destroy(s_logo_layer);
   layer_destroy(s_hands_layer);
   layer_destroy(s_inner_tick_layer);
   layer_destroy(s_outer_tick_layer);
+  layer_destroy(s_date_layer);
+  bitmap_layer_destroy(s_logo_layer);
 }
 
 static void prv_init(void) {
