@@ -45,6 +45,11 @@
           "file": "pebble-logo.png",
           "name": "PEBBLE_LOGO",
           "type": "bitmap"
+        },
+        {
+          "file": "battery.pdc",
+          "name": "PDC_BATTERY",
+          "type": "raw"
         }
       ]
     }

@@ -37,13 +37,16 @@ static BitmapLayer *s_logo_layer;
 static Layer *s_outer_tick_layer;
 static Layer *s_inner_tick_layer;
 static Layer *s_date_layer;
+static Layer *s_battery_layer;
 static Layer *s_hands_layer;
 
 static FFont *s_font;
 static GBitmap *s_logo;
+static GDrawCommandImage *s_battery_pdc;
 
 static EventHandle s_settings_event_handle;
 static EventHandle s_tick_timer_event_handle;
+static EventHandle s_battery_event_handle;
 
 static uint8_t s_hour_multiplier;
 static char s_date[3];
@@ -90,6 +93,10 @@ static void prv_date_layer_update_proc(Layer *layer, GContext *ctx) {
   fctx_end_fill(&fctx);
 
   fctx_deinit_context(&fctx);
+}
+
+static void prv_battery_layer_update_proc(Layer *layer, GContext *ctx) {
+  gdraw_command_image_draw(ctx, s_battery_pdc, GPointZero);
 }
 
 static void prv_outer_tick_layer_update_proc(Layer *layer, GContext *ctx) {
@@ -227,6 +234,23 @@ static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   }
 }
 
+static bool prv_battery_pdc_iterator(GDrawCommand *command, uint32_t index, void *context) {
+  GColor *color = (GColor *) context;
+  gdraw_command_set_stroke_color(command, *color);
+  if (index > 0) {
+    gdraw_command_set_fill_color(command, *color);
+  }
+  return true;
+}
+
+static void prv_battery_event_handler(BatteryChargeState state) {
+  GDrawCommandList *list = gdraw_command_image_get_command_list(s_battery_pdc);
+  gdraw_command_set_hidden(gdraw_command_list_get_command(list, 2), state.charge_percent < 80);
+  gdraw_command_set_hidden(gdraw_command_list_get_command(list, 3), state.charge_percent < 40);
+  gdraw_command_set_hidden(gdraw_command_list_get_command(list, 4), state.charge_percent < 10);
+  layer_mark_dirty(s_battery_layer);
+}
+
 static void prv_settings_received_handler(void *context) {
   connection_vibes_set_state(atoi(enamel_get_CONNECTION_VIBE()));
   hourly_vibes_set_enabled(enamel_get_HOURLY_VIBE());
@@ -244,6 +268,9 @@ static void prv_settings_received_handler(void *context) {
     palette[i] = logo_color;
   }
 
+  gdraw_command_list_iterate(gdraw_command_image_get_command_list(s_battery_pdc),
+    prv_battery_pdc_iterator, &logo_color);
+
   window_set_background_color(s_window, enamel_get_BACKGROUND_COLOR());
 }
 
@@ -260,6 +287,10 @@ static void prv_window_load(Window *window) {
   s_date_layer = layer_create(GRect(106, 80, 25, 17));
   layer_set_update_proc(s_date_layer, prv_date_layer_update_proc);
   layer_add_child(root_layer, s_date_layer);
+
+  s_battery_layer = layer_create(GRect(46, 78, frame.size.w, frame.size.h));
+  layer_set_update_proc(s_battery_layer, prv_battery_layer_update_proc);
+  layer_add_child(root_layer, s_battery_layer);
 
   s_outer_tick_layer = layer_create(frame);
   layer_set_update_proc(s_outer_tick_layer, prv_outer_tick_layer_update_proc);
@@ -282,15 +313,20 @@ static void prv_window_load(Window *window) {
 
   prv_settings_received_handler(NULL);
   s_settings_event_handle = enamel_settings_received_subscribe(prv_settings_received_handler, NULL);
+
+  prv_battery_event_handler(battery_state_service_peek());
+  s_battery_event_handle = events_battery_state_service_subscribe(prv_battery_event_handler);
 }
 
 static void prv_window_unload(Window *window) {
+  events_battery_state_service_unsubscribe(s_battery_event_handle);
   events_tick_timer_service_unsubscribe(s_tick_timer_event_handle);
   enamel_settings_received_unsubscribe(s_settings_event_handle);
 
   layer_destroy(s_hands_layer);
   layer_destroy(s_inner_tick_layer);
   layer_destroy(s_outer_tick_layer);
+  layer_destroy(s_battery_layer);
   layer_destroy(s_date_layer);
   bitmap_layer_destroy(s_logo_layer);
 }
@@ -309,6 +345,7 @@ static void prv_init(void) {
 
   s_font = ffont_create_from_resource(RESOURCE_ID_LECO_FFONT);
   s_logo = gbitmap_create_with_resource(RESOURCE_ID_PEBBLE_LOGO);
+  s_battery_pdc = gdraw_command_image_create_with_resource(RESOURCE_ID_PDC_BATTERY);
 
   s_path_second = gpath_create(&PATH_SECOND);
   s_path_minute = gpath_create(&PATH_MINUTE);
@@ -328,6 +365,8 @@ static void prv_deinit(void) {
   gpath_destroy(s_path_hour);
   gpath_destroy(s_path_minute);
   gpath_destroy(s_path_second);
+
+  gdraw_command_image_destroy(s_battery_pdc);
   gbitmap_destroy(s_logo);
   ffont_destroy(s_font);
 
