@@ -72,8 +72,6 @@ static inline void fctx_draw_line(FContext *fctx, uint32_t rotation, FPoint offs
 }
 
 static void prv_logo_layer_update_proc(Layer *layer, GContext *ctx) {
-  GRect bounds = layer_get_bounds(layer);
-
   FContext fctx;
   fctx_init_context(&fctx, ctx);
 
