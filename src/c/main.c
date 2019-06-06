@@ -355,7 +355,7 @@ static void prv_init(void) {
   enamel_init();
   connection_vibes_init();
   hourly_vibes_init();
-  uint32_t const pattern[] = { 300 };
+  uint32_t const pattern[] = { 200 };
   hourly_vibes_set_pattern((VibePattern) {
       .durations = pattern,
       .num_segments = 1
