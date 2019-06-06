@@ -145,7 +145,19 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
 
   FPoint offset = FPointI(bounds.origin.x + (bounds.size.w / 2) - 1, bounds.origin.y);
   fctx_set_offset(&fctx, offset);
-  fctx_set_scale(&fctx, FPointOne, FPointI(7, 11));
+  fctx_set_scale(&fctx, FPointOne, FPointI(12, 16));
+  fctx_set_fill_color(&fctx, enamel_get_BACKGROUND_COLOR());
+
+  fctx_begin_fill(&fctx);
+  fctx_move_to(&fctx, FPointZero);
+  fctx_line_to(&fctx, FPoint(-1, 1));
+  fctx_line_to(&fctx, FPoint(1, 1));
+  fctx_close_path(&fctx);
+  fctx_end_fill(&fctx);
+
+  offset.y += FIX1;
+  fctx_set_offset(&fctx, offset);
+  fctx_set_scale(&fctx, FPointOne, FPointI(10, 14));
   fctx_set_fill_color(&fctx, enamel_get_HOUR_HAND_COLOR());
 
   fctx_begin_fill(&fctx);
