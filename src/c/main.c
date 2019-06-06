@@ -76,6 +76,7 @@ static void prv_logo_layer_update_proc(Layer *layer, GContext *ctx) {
   fctx_init_context(&fctx, ctx);
 
   fctx_set_scale(&fctx, FPoint(2, 2), FPointOne);
+  fctx_set_color_bias(&fctx, 1);
   fctx_set_fill_color(&fctx, gcolor_legible_over(enamel_get_BACKGROUND_COLOR()));
   fctx_set_offset(&fctx, FPointI(62, 55));
 
