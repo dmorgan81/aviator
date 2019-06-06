@@ -143,21 +143,9 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   FContext fctx;
   fctx_init_context(&fctx, ctx);
 
-  FPoint offset = FPointI(bounds.origin.x + (bounds.size.w / 2), bounds.origin.y);
+  FPoint offset = FPointI(bounds.origin.x + (bounds.size.w / 2) - 1, bounds.origin.y);
   fctx_set_offset(&fctx, offset);
-  fctx_set_scale(&fctx, FPointOne, FPointI(11, 14));
-  fctx_set_fill_color(&fctx, GColorDarkGray);
-
-  fctx_begin_fill(&fctx);
-  fctx_move_to(&fctx, FPointZero);
-  fctx_line_to(&fctx, FPoint(-1, 1));
-  fctx_line_to(&fctx, FPoint(1, 1));
-  fctx_close_path(&fctx);
-  fctx_end_fill(&fctx);
-
-  offset.y += FIX1;
-  fctx_set_offset(&fctx, offset);
-  fctx_set_scale(&fctx, FPointOne, FPointI(9, 12));
+  fctx_set_scale(&fctx, FPointOne, FPointI(7, 11));
   fctx_set_fill_color(&fctx, enamel_get_HOUR_HAND_COLOR());
 
   fctx_begin_fill(&fctx);
@@ -205,7 +193,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void prv_hands_layer_update_proc(Layer *layer, GContext *ctx) {
-  graphics_context_set_stroke_color(ctx, GColorDarkGray);
+  graphics_context_set_stroke_color(ctx, enamel_get_BACKGROUND_COLOR());
   graphics_context_set_stroke_width(ctx, 1);
 
   graphics_context_set_fill_color(ctx, enamel_get_MINUTE_HAND_COLOR());
