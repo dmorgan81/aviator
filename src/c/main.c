@@ -258,15 +258,15 @@ static void prv_hands_layer_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+  s_hour_multiplier = atoi(enamel_get_CLOCK_TYPE());
 #ifdef SCREENSHOT
-  tick_time->tm_hour = 3;
+  tick_time->tm_hour = s_hour_multiplier == 1 ? 3 : 7;
   tick_time->tm_min = 40;
 #endif
 
   int32_t angle = tick_time->tm_min * TRIG_MAX_ANGLE / 60;
   gpath_rotate_to(s_path_minute, angle);
 
-  s_hour_multiplier = atoi(enamel_get_CLOCK_TYPE());
   angle = (TRIG_MAX_ANGLE * ((tick_time->tm_hour * 6) + (tick_time->tm_min / 10))) / (12 * s_hour_multiplier * 6);
   gpath_rotate_to(s_path_hour, angle);
   
