@@ -2,6 +2,7 @@
 #include <pebble-events/pebble-events.h>
 #include <pebble-fctx/fctx.h>
 #include <pebble-fctx/ffont.h>
+#include <pebble-fctx/fpath.h>
 #include <pebble-connection-vibes/connection-vibes.h>
 #include <pebble-hourly-vibes/hourly-vibes.h>
 #include "enamel.h"
@@ -33,7 +34,7 @@ static GPath *s_path_minute;
 static GPath *s_path_hour;
 
 static Window *s_window;
-static BitmapLayer *s_logo_layer;
+static Layer *s_logo_layer;
 static TextLayer *s_name_layer;
 static Layer *s_outer_tick_layer;
 static Layer *s_inner_tick_layer;
@@ -42,7 +43,7 @@ static Layer *s_battery_layer;
 static Layer *s_hands_layer;
 
 static FFont *s_font;
-static GBitmap *s_logo;
+static FPath *s_logo;
 static GDrawCommandImage *s_battery_pdc;
 
 static EventHandle s_settings_event_handle;
@@ -68,6 +69,23 @@ static inline void fctx_draw_line(FContext *fctx, uint32_t rotation, FPoint offs
     fctx_close_path(fctx);
 
     fctx_end_fill(fctx);
+}
+
+static void prv_logo_layer_update_proc(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_bounds(layer);
+
+  FContext fctx;
+  fctx_init_context(&fctx, ctx);
+
+  fctx_set_scale(&fctx, FPoint(2, 2), FPointOne);
+  fctx_set_fill_color(&fctx, gcolor_legible_over(enamel_get_BACKGROUND_COLOR()));
+  fctx_set_offset(&fctx, FPointI(62, 55));
+
+  fctx_begin_fill(&fctx);
+  fctx_draw_commands(&fctx, FPointZero, s_logo->data, s_logo->size);
+  fctx_end_fill(&fctx);
+
+  fctx_deinit_context(&fctx);
 }
 
 static void prv_date_layer_update_proc(Layer *layer, GContext *ctx) {
@@ -296,16 +314,9 @@ static void prv_settings_received_handler(void *context) {
   prv_tick_handler(localtime(&now), DAY_UNIT);
   s_tick_timer_event_handle = events_tick_timer_service_subscribe(enamel_get_ENABLE_SECONDS() ? SECOND_UNIT : MINUTE_UNIT, prv_tick_handler);
 
-  GColor logo_color = gcolor_legible_over(enamel_get_BACKGROUND_COLOR());
-  GColor *palette = gbitmap_get_palette(s_logo);
-  for (int i = 1; i < 4; i++) {
-    palette[i] = logo_color;
-  }
-
-  text_layer_set_text_color(s_name_layer, logo_color);
-
-  gdraw_command_list_iterate(gdraw_command_image_get_command_list(s_battery_pdc),
-    prv_battery_pdc_iterator, &logo_color);
+  GColor color = gcolor_legible_over(enamel_get_BACKGROUND_COLOR());
+  text_layer_set_text_color(s_name_layer, color);
+  gdraw_command_list_iterate(gdraw_command_image_get_command_list(s_battery_pdc), prv_battery_pdc_iterator, &color);
 
   window_set_background_color(s_window, enamel_get_BACKGROUND_COLOR());
 }
@@ -314,11 +325,17 @@ static void prv_window_load(Window *window) {
   Layer *root_layer = window_get_root_layer(window);
   GRect frame = layer_get_frame(root_layer);
 
+/*
   s_logo_layer = bitmap_layer_create(GRect(0, 56, frame.size.w, 14));
   bitmap_layer_set_bitmap(s_logo_layer, s_logo);
   bitmap_layer_set_alignment(s_logo_layer, GAlignTop);
   bitmap_layer_set_compositing_mode(s_logo_layer, GCompOpSet);
   layer_add_child(root_layer, bitmap_layer_get_layer(s_logo_layer));
+*/
+
+  s_logo_layer = layer_create(frame);
+  layer_set_update_proc(s_logo_layer, prv_logo_layer_update_proc);
+  layer_add_child(root_layer, s_logo_layer);
 
   s_name_layer = text_layer_create(GRect(0, 108, frame.size.w, frame.size.h));
   text_layer_set_background_color(s_name_layer, GColorClear);
@@ -372,7 +389,7 @@ static void prv_window_unload(Window *window) {
   layer_destroy(s_battery_layer);
   layer_destroy(s_date_layer);
   text_layer_destroy(s_name_layer);
-  bitmap_layer_destroy(s_logo_layer);
+  layer_destroy(s_logo_layer);
 }
 
 static void prv_init(void) {
@@ -388,7 +405,7 @@ static void prv_init(void) {
   events_app_message_open();
 
   s_font = ffont_create_from_resource(RESOURCE_ID_LECO_FFONT);
-  s_logo = gbitmap_create_with_resource(RESOURCE_ID_PEBBLE_LOGO);
+  s_logo = fpath_create_from_resource(RESOURCE_ID_PEBBLE_LOGO);
   s_battery_pdc = gdraw_command_image_create_with_resource(RESOURCE_ID_PDC_BATTERY);
 
   s_path_second = gpath_create(&PATH_SECOND);
@@ -411,7 +428,7 @@ static void prv_deinit(void) {
   gpath_destroy(s_path_second);
 
   gdraw_command_image_destroy(s_battery_pdc);
-  gbitmap_destroy(s_logo);
+  fpath_destroy(s_logo);
   ffont_destroy(s_font);
 
   hourly_vibes_deinit();
