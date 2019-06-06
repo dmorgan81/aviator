@@ -99,11 +99,11 @@ static void prv_date_layer_update_proc(Layer *layer, GContext *ctx) {
   FContext fctx;
   fctx_init_context(&fctx, ctx);
 
-  FPoint offset = FPointI(frame.origin.x + bounds.size.w - 3, frame.origin.y + 3);
+  FPoint offset = FPointI(frame.origin.x + bounds.size.w - 3, frame.origin.y + 4);
   fctx_set_offset(&fctx, offset);
 
   fctx_set_fill_color(&fctx, enamel_get_BACKGROUND_COLOR());
-  fctx_set_text_em_height(&fctx, s_font, 15);
+  fctx_set_text_em_height(&fctx, s_font, 14);
 
   fctx_begin_fill(&fctx);
   fctx_draw_string(&fctx, s_date, s_font, GTextAlignmentRight, FTextAnchorTop);
