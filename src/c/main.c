@@ -323,14 +323,6 @@ static void prv_window_load(Window *window) {
   Layer *root_layer = window_get_root_layer(window);
   GRect frame = layer_get_frame(root_layer);
 
-/*
-  s_logo_layer = bitmap_layer_create(GRect(0, 56, frame.size.w, 14));
-  bitmap_layer_set_bitmap(s_logo_layer, s_logo);
-  bitmap_layer_set_alignment(s_logo_layer, GAlignTop);
-  bitmap_layer_set_compositing_mode(s_logo_layer, GCompOpSet);
-  layer_add_child(root_layer, bitmap_layer_get_layer(s_logo_layer));
-*/
-
   s_logo_layer = layer_create(frame);
   layer_set_update_proc(s_logo_layer, prv_logo_layer_update_proc);
   layer_add_child(root_layer, s_logo_layer);
