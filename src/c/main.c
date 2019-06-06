@@ -173,6 +173,18 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   for (int i = 5; i < 60; i += 5) {
     int32_t angle = TRIG_MAX_ANGLE * i / 60;
     offset = fpoint_from_polar(bounds, angle);
+    if (i == 5 || i == 15 || i == 25) {
+      offset.x -= FIX1;
+    } else if (i == 35 || i == 45 || i == 55) {
+      offset.x += FIX1;
+    }
+    if (i == 5 || i == 55) {
+      offset.y += FIX1;
+    } else if (i == 25 || i == 35) {
+      offset.y -= FIX1;
+    } else if (i == 30) {
+      offset.y -= INT_TO_FIXED(2);
+    }
     fctx_draw_line(&fctx, angle, offset, scale);
   }
 
