@@ -1,7 +1,7 @@
 {
   "name": "aviator",
   "author": "David Morgan",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "keywords": [
     "pebble-app"
   ],
@@ -19,6 +19,7 @@
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
+      "basalt",
       "chalk"
     ],
     "watchapp": {

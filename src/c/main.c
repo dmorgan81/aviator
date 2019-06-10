@@ -53,7 +53,7 @@ static EventHandle s_battery_event_handle;
 static uint8_t s_hour_multiplier;
 static char s_date[3];
 
-#define fpoint_from_polar(bounds, angle) g2fpoint(gpoint_from_polar((bounds), GOvalScaleModeFitCircle, (angle)))
+#define fpoint_from_polar(bounds, angle) g2fpoint(gpoint_from_polar((bounds), PBL_IF_ROUND_ELSE(GOvalScaleModeFitCircle, GOvalScaleModeFillCircle), (angle)))
 
 static inline void fctx_draw_line(FContext *fctx, uint32_t rotation, FPoint offset, FPoint scale) {
     fctx_begin_fill(fctx);
@@ -78,7 +78,7 @@ static void prv_logo_layer_update_proc(Layer *layer, GContext *ctx) {
   fctx_set_scale(&fctx, FPoint(2, 2), FPointOne);
   fctx_set_color_bias(&fctx, 1);
   fctx_set_fill_color(&fctx, gcolor_legible_over(enamel_get_BACKGROUND_COLOR()));
-  fctx_set_offset(&fctx, FPointI(62, 55));
+  fctx_set_offset(&fctx, PBL_IF_ROUND_ELSE(FPointI(62, 55), FPointI(44, 50)));
 
   fctx_begin_fill(&fctx);
   fctx_draw_commands(&fctx, FPointZero, s_logo->data, s_logo->size);
@@ -118,22 +118,25 @@ static void prv_battery_layer_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void prv_outer_tick_layer_update_proc(Layer *layer, GContext *ctx) {
-  GRect bounds = grect_crop(layer_get_bounds(layer), 3);
+  GRect bounds = layer_get_bounds(layer);
+  GRect crop = grect_crop(bounds, PBL_IF_ROUND_ELSE(5, 3));
 
   FContext fctx;
   fctx_init_context(&fctx, ctx);
-
   fctx_set_fill_color(&fctx, GColorLightGray);
-  FPoint scale = FPointI(1, 8);
+  FPoint scale = FPointI(1, 4);
   for (int i = 0; i < 60; i++) {
     if (i % 5 == 0) continue;
     int32_t angle = TRIG_MAX_ANGLE * i / 60;
-    FPoint offset = fpoint_from_polar(bounds, angle);
+    FPoint offset = fpoint_from_polar(crop, angle);
     fctx_draw_line(&fctx, angle, offset, scale);
   }
 
   fctx_set_fill_color(&fctx, gcolor_legible_over(enamel_get_BACKGROUND_COLOR()));
   fctx_set_text_em_height(&fctx, s_font, 10);
+#ifdef PBL_ROUND
+  bounds = grect_crop(bounds, 3);
+#endif
   for (int i = 1; i < 12; i++) {
     fctx_begin_fill(&fctx);
 
@@ -174,7 +177,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
 
   offset.y += FIX1;
   fctx_set_offset(&fctx, offset);
-  fctx_set_scale(&fctx, FPointOne, FPointI(10, 14));
+  fctx_set_scale(&fctx, FPointOne, PBL_IF_ROUND_ELSE(FPointI(10, 14), FPointI(8, 12)));
   fctx_set_fill_color(&fctx, enamel_get_HOUR_HAND_COLOR());
 
   fctx_begin_fill(&fctx);
@@ -184,7 +187,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   fctx_close_path(&fctx);
   fctx_end_fill(&fctx);
 
-  bounds = grect_crop(layer_get_bounds(layer), 14);
+  bounds = grect_crop(layer_get_bounds(layer), PBL_IF_ROUND_ELSE(14, 12));
   fctx_set_fill_color(&fctx, GColorLightGray);
   FPoint scale = FPointI(3, 3);
   for (int i = 5; i < 60; i += 5) {
@@ -205,8 +208,8 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
     fctx_draw_line(&fctx, angle, offset, scale);
   }
 
-  bounds = grect_crop(layer_get_bounds(layer), 30);
-  scale = FPointI(1, 12);
+  bounds = grect_crop(layer_get_bounds(layer), PBL_IF_ROUND_ELSE(30, 26));
+  scale = FPointI(1, PBL_IF_ROUND_ELSE(12, 10));
   for (int i = 5; i < 120; i += 10) {
     int32_t angle = TRIG_MAX_ANGLE * i / 120;
     offset = fpoint_from_polar(bounds, angle);
@@ -215,7 +218,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
 
   fctx_set_rotation(&fctx, 0);
   fctx_set_fill_color(&fctx, gcolor_legible_over(enamel_get_BACKGROUND_COLOR()));
-  fctx_set_text_em_height(&fctx, s_font, 18);
+  fctx_set_text_em_height(&fctx, s_font, PBL_IF_ROUND_ELSE(18, 14));
   for (int i = 1; i <= 12; i++) {
     fctx_begin_fill(&fctx);
 
@@ -328,18 +331,26 @@ static void prv_window_load(Window *window) {
   layer_set_update_proc(s_logo_layer, prv_logo_layer_update_proc);
   layer_add_child(root_layer, s_logo_layer);
 
-  s_name_layer = text_layer_create(GRect(0, 108, frame.size.w, frame.size.h));
+  s_name_layer = text_layer_create(GRect(0, PBL_IF_ROUND_ELSE(108, 100), frame.size.w, frame.size.h));
   text_layer_set_background_color(s_name_layer, GColorClear);
   text_layer_set_text(s_name_layer, "AVIATOR");
   text_layer_set_font(s_name_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
   text_layer_set_text_alignment(s_name_layer, GTextAlignmentCenter);
   layer_add_child(root_layer, text_layer_get_layer(s_name_layer));
 
+#ifdef PBL_ROUND
   s_date_layer = layer_create(GRect(106, 80, 25, 17));
+#else
+  s_date_layer = layer_create(GRect(88, 74, 25, 17));
+#endif
   layer_set_update_proc(s_date_layer, prv_date_layer_update_proc);
   layer_add_child(root_layer, s_date_layer);
 
-  s_battery_layer = layer_create(GRect(46, 78, frame.size.w, frame.size.h));
+#ifdef PBL_ROUND
+  s_battery_layer = layer_create(GRect(44, 79, frame.size.w, frame.size.h));
+#else
+  s_battery_layer = layer_create(GRect(28, 74, frame.size.w, frame.size.h));
+#endif
   layer_set_update_proc(s_battery_layer, prv_battery_layer_update_proc);
   layer_add_child(root_layer, s_battery_layer);
 
