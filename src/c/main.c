@@ -49,9 +49,11 @@ static GDrawCommandImage *s_battery_pdc;
 static EventHandle s_settings_event_handle;
 static EventHandle s_tick_timer_event_handle;
 static EventHandle s_battery_event_handle;
+static EventHandle s_connection_event_handle;
 
 static uint8_t s_hour_multiplier;
 static char s_date[3];
+static bool s_connected;
 
 #define fpoint_from_polar(bounds, angle) g2fpoint(gpoint_from_polar((bounds), PBL_IF_ROUND_ELSE(GOvalScaleModeFitCircle, GOvalScaleModeFillCircle), (angle)))
 
@@ -273,6 +275,11 @@ static void prv_hands_layer_update_proc(Layer *layer, GContext *ctx) {
   center.y -= 1;
   graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorDarkGray, enamel_get_HOUR_HAND_COLOR()));
   graphics_fill_circle(ctx, center, 4);
+
+  if (!s_connected) {
+    graphics_context_set_fill_color(ctx, enamel_get_BACKGROUND_COLOR());
+    graphics_fill_circle(ctx, center, 3);
+  }
 }
 
 static void prv_tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -339,6 +346,11 @@ static void prv_settings_received_handler(void *context) {
   window_set_background_color(s_window, enamel_get_BACKGROUND_COLOR());
 }
 
+static void prv_connection_event_handler(bool connected) {
+  s_connected = connected;
+  layer_mark_dirty(s_hands_layer);
+}
+
 static void prv_window_load(Window *window) {
   Layer *root_layer = window_get_root_layer(window);
   GRect frame = layer_get_frame(root_layer);
@@ -394,9 +406,15 @@ static void prv_window_load(Window *window) {
 
   prv_battery_event_handler(battery_state_service_peek());
   s_battery_event_handle = events_battery_state_service_subscribe(prv_battery_event_handler);
+
+  prv_connection_event_handler(connection_service_peek_pebble_app_connection());
+  s_connection_event_handle = events_connection_service_subscribe((ConnectionHandlers) {
+    .pebble_app_connection_handler = prv_connection_event_handler
+  });
 }
 
 static void prv_window_unload(Window *window) {
+  events_connection_service_unsubscribe(s_connection_event_handle);
   events_battery_state_service_unsubscribe(s_battery_event_handle);
   events_tick_timer_service_unsubscribe(s_tick_timer_event_handle);
   enamel_settings_received_unsubscribe(s_settings_event_handle);
