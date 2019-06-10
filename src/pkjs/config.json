@@ -43,8 +43,10 @@
                     [ "55FF00", "FFFF00", "FF5500" ],
                     [ "00AAFF", "FF0000", "FF00AA" ],
                     [ "AAAAAA", "FFFFFF", "#AA55FF" ]
-                ]
-            },{
+                ],
+                "capabilities": ["COLOR"]
+            },
+            {
                 "type": "color",
                 "messageKey": "MINUTE_HAND_COLOR",
                 "label": "Minute Hand Color",
@@ -54,7 +56,8 @@
                     [ "55FF00", "FFFF00", "FF5500" ],
                     [ "00AAFF", "FF0000", "FF00AA" ],
                     [ "AAAAAA", "FFFFFF", "#AA55FF" ]
-                ]
+                ],
+                "capabilities": ["COLOR"]
             },
             {
                 "type": "toggle",
@@ -87,7 +90,8 @@
                 "messageKey": "ENABLE_HEALTH",
                 "label": "Enable Health",
                 "description": "Suppresses Bluetooth and hourly vibes while sleeping",
-                "defaultValue": false
+                "defaultValue": false,
+                "capabilities": ["HEALTH"]
             }
         ]
     },

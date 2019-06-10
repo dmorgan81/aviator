@@ -117,13 +117,23 @@ static void prv_battery_layer_update_proc(Layer *layer, GContext *ctx) {
   gdraw_command_image_draw(ctx, s_battery_pdc, GPointZero);
 }
 
+#ifdef PBL_BW
+static inline GColor enamel_get_HOUR_HAND_COLOR(void) {
+  return gcolor_legible_over(enamel_get_BACKGROUND_COLOR());
+}
+
+static inline GColor enamel_get_MINUTE_HAND_COLOR(void) {
+  return gcolor_legible_over(enamel_get_BACKGROUND_COLOR());
+}
+#endif
+
 static void prv_outer_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
   GRect crop = grect_crop(bounds, PBL_IF_ROUND_ELSE(5, 3));
 
   FContext fctx;
   fctx_init_context(&fctx, ctx);
-  fctx_set_fill_color(&fctx, GColorLightGray);
+  fctx_set_fill_color(&fctx, PBL_IF_COLOR_ELSE(GColorLightGray, gcolor_legible_over(enamel_get_BACKGROUND_COLOR())));
   FPoint scale = FPointI(1, 4);
   for (int i = 0; i < 60; i++) {
     if (i % 5 == 0) continue;
@@ -188,7 +198,7 @@ static void prv_inner_tick_layer_update_proc(Layer *layer, GContext *ctx) {
   fctx_end_fill(&fctx);
 
   bounds = grect_crop(layer_get_bounds(layer), PBL_IF_ROUND_ELSE(14, 12));
-  fctx_set_fill_color(&fctx, GColorLightGray);
+  fctx_set_fill_color(&fctx, PBL_IF_COLOR_ELSE(GColorLightGray, enamel_get_HOUR_HAND_COLOR()));
   FPoint scale = FPointI(3, 3);
   for (int i = 5; i < 60; i += 5) {
     int32_t angle = TRIG_MAX_ANGLE * i / 60;
@@ -242,11 +252,15 @@ static void prv_hands_layer_update_proc(Layer *layer, GContext *ctx) {
 
   graphics_context_set_fill_color(ctx, enamel_get_MINUTE_HAND_COLOR());
   gpath_draw_filled(ctx, s_path_minute);
+#ifdef PBL_COLOR
   gpath_draw_outline(ctx, s_path_minute);
+#endif
 
   graphics_context_set_fill_color(ctx, enamel_get_HOUR_HAND_COLOR());
   gpath_draw_filled(ctx, s_path_hour);
+#ifdef PBL_COLOR
   gpath_draw_outline(ctx, s_path_hour);
+#endif
 
   if (enamel_get_ENABLE_SECONDS()) {
     graphics_context_set_stroke_width(ctx, 2);
@@ -257,7 +271,7 @@ static void prv_hands_layer_update_proc(Layer *layer, GContext *ctx) {
   GPoint center = grect_center_point(&bounds);
   center.x -= 1;
   center.y -= 1;
-  graphics_context_set_fill_color(ctx, GColorDarkGray);
+  graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorDarkGray, enamel_get_HOUR_HAND_COLOR()));
   graphics_fill_circle(ctx, center, 4);
 }
 
@@ -308,8 +322,10 @@ static void prv_battery_event_handler(BatteryChargeState state) {
 static void prv_settings_received_handler(void *context) {
   connection_vibes_set_state(atoi(enamel_get_CONNECTION_VIBE()));
   hourly_vibes_set_enabled(enamel_get_HOURLY_VIBE());
+#ifdef PBL_HEALTH
   connection_vibes_enable_health(enamel_get_ENABLE_HEALTH());
   hourly_vibes_enable_health(enamel_get_ENABLE_HEALTH());
+#endif
 
   if (s_tick_timer_event_handle) events_tick_timer_service_unsubscribe(s_tick_timer_event_handle);
   time_t now = time(NULL);
